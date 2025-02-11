@@ -3,12 +3,15 @@ import { Characteristic as ICharacteristic, CharacteristicValue, Logger, Platfor
 export enum SwitchType {
   Simple = 'simple',
   AutoReset = 'auto_reset',
+  Button = 'button',
 }
 
 export interface SwitchConfig {
   name: string;
-  type: SwitchType, 
+  type: SwitchType,
   auto_reset?: SwitchResetConfig;
+  with_counter: boolean;
+  counter_trigger?: number;
 };
 
 export interface SwitchResetConfig {
@@ -18,9 +21,12 @@ export interface SwitchResetConfig {
 
 export class DummySwitchAccessory {
   private service: Service;
+  private counterIndicatorService?: Service;
 
   private state = false;
   private resetInterval: NodeJS.Timeout | undefined;
+
+  private activationCounter: number = 0;
 
   constructor(
     private readonly characteristic: typeof ICharacteristic,
@@ -44,6 +50,16 @@ export class DummySwitchAccessory {
       .setCharacteristic(characteristic.Manufacturer, 'multicatch')
       .setCharacteristic(characteristic.Model, 'Dummy Button')
       .setCharacteristic(characteristic.FirmwareRevision, '1.0.0');
+
+    if (this.config.with_counter) {
+      this.counterIndicatorService = this.accessory.addService(serviceType.Switch, config.name + '_counter')!
+        .setCharacteristic(characteristic.Name, config.name + '_counter')
+        .setCharacteristic(characteristic.ConfiguredName, config.name + '_counter');
+
+      this.counterIndicatorService.getCharacteristic(characteristic.On)
+        .onSet(this.resetCounter.bind(this))
+        .onGet(this.getCounterState.bind(this));
+    }
   }
 
   private verifyAndFixConfig() {
@@ -54,8 +70,13 @@ export class DummySwitchAccessory {
       };
     }
 
-    if (this.config.auto_reset && !this.config.auto_reset.target_state) {
+    if (this.config.auto_reset && this.config.auto_reset.target_state === undefined) {
       this.config.auto_reset.target_state = false; // default reset state is OFF
+    }
+
+    if (this.config.type === SwitchType.AutoReset) {
+      this.state = this.config.auto_reset?.target_state || false;
+      this.service.updateCharacteristic(this.characteristic.On, this.state);
     }
   }
 
@@ -77,6 +98,9 @@ export class DummySwitchAccessory {
         this.setState(target_state!);
         this.service.updateCharacteristic(this.characteristic.On, this.state);
       }, auto_reset.delay);
+    } else if (this.config.type === SwitchType.Button) {
+      this.setState(false);
+      this.service.updateCharacteristic(this.characteristic.On, this.state);
     }
   }
 
@@ -86,5 +110,20 @@ export class DummySwitchAccessory {
 
   private setState(state: boolean) {
     this.state = state;
+    if (this.config.with_counter && this.state) {
+      this.activationCounter++;
+    }
+  }
+
+  async resetCounter() {
+    this.activationCounter = 0;
+    this.counterIndicatorService?.updateCharacteristic(this.characteristic.On, false);
+  }
+
+  async getCounterState(): Promise<CharacteristicValue> {
+    if (this.config.counter_trigger) {
+      return this.activationCounter >= this.config.counter_trigger;
+    }
+    return false;
   }
 }

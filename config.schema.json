@@ -34,12 +34,17 @@
                     "auto_reset"
                   ],
                   "title": "Timed switch (with auto-reset)"
+                },
+                {
+                  "enum": [
+                    "button"
+                  ],
+                  "title": "Button (always turns OFF)"
                 }
               ]
             },
             "auto_reset": {
               "title": "Timed switch settings (auto-reset)",
-              "description": "This section is required only when you choose 'Timed switch'",
               "type": "object",
               "required": false,
               "properties": {
@@ -50,10 +55,30 @@
                 },
                 "target_state": {
                   "title": "Set to ON after timeout (default: OFF)",
+                  "description": "By default, the switch will turn OFF after specified delay. If you tick this option, the switch will turn ON instead.",
                   "type": "boolean",
                   "required": false,
                   "placeholder": false
                 }
+              },
+              "condition": {
+                "functionBody": "try { return model.switches[arrayIndices[0]].type === 'auto_reset' } catch(e){ return false }"
+              }
+            },
+            "with_counter": {
+              "title": "Count switch activations",
+              "description": "This option also enables a special switch that can be triggered based on the number of activations.",
+              "type": "boolean",
+              "required": true,
+              "default": false
+            },
+            "counter_trigger": {
+              "title": "Counter trigger condition",
+              "description": "When the activation count is equal to this number, a special switch (suffix: '_counter') will be turned ON.",
+              "type": "integer",
+              "required": false,
+              "condition": {
+                "functionBody": "try { return model.switches[arrayIndices[0]].with_counter } catch(e){ return false }"
               }
             }
           }
