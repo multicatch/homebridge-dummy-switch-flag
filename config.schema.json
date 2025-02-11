@@ -1,16 +1,63 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "DummySwitchFlagHomebridgePlugin",
   "pluginType": "platform",
   "singular": true,
   "strictValidation": false,
   "schema": {
     "type": "object",
     "properties": {
-      "name": {
-        "title": "Name",
-        "type": "string",
-        "required": true,
-        "default": "Example Dynamic Platform"
+      "switches": {
+        "title": "Config of dummy switches (flags).",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "title": "Switch name",
+              "type": "string",
+              "required": true
+            },
+            "type": {
+              "title": "Type of switch",
+              "required": true,
+              "type": "string",
+              "default": "simple",
+              "oneOf": [
+                {
+                  "enum": [
+                    "simple"
+                  ],
+                  "title": "Simple switch"
+                },
+                {
+                  "enum": [
+                    "auto_reset"
+                  ],
+                  "title": "Timed switch (with auto-reset)"
+                }
+              ]
+            },
+            "auto_reset": {
+              "title": "Timed switch settings (auto-reset)",
+              "description": "This section is required only when you choose 'Timed switch'",
+              "type": "object",
+              "required": false,
+              "properties": {
+                "delay": {
+                  "title": "Delay of auto-reset (milliseconds)",
+                  "type": "number",
+                  "required": true
+                },
+                "target_state": {
+                  "title": "Set to ON after timeout (default: OFF)",
+                  "type": "boolean",
+                  "required": false,
+                  "placeholder": false
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

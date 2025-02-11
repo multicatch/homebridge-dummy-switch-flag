@@ -1,19 +1,19 @@
 {
-  "name": "homebridge-plugin-name",
-  "displayName": "Plugin Name",
+  "name": "homebridge-dummy-switch-flag",
+  "displayName": "Dummy Switch Flag",
   "type": "module",
   "version": "1.0.0",
   "private": true,
-  "description": "A short description about what your plugin does.",
-  "author": "Your Name",
+  "description": "Dummy switch for use as 'flags'. Flags can be used as conditions in HomeKit automations.",
+  "author": "multicatch",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/USERNAME/GITHUB_PROJECT_NAME#readme",
+  "homepage": "https://github.com/multicatch/homebridge-dummy-switch-flag",
   "repository": {
     "type": "git",
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME.git"
+    "url": "git+https://github.com/multicatch/homebridge-dummy-switch-flag.git"
   },
   "bugs": {
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME/issues"
+    "url": "https://github.com/multicatch/homebridge-dummy-switch-flag/issues"
   },
   "keywords": [
     "homebridge-plugin"
@@ -35,13 +35,11 @@
     "@types/node": "^22.8.6",
     "eslint": "^9.14.0",
     "homebridge": "^2.0.0-beta.0",
+    "homebridge-lib": "^7.1.3",
     "nodemon": "^3.1.7",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.12.2"
-  },
-  "dependencies": {
-    "homebridge-lib": "^7.1.0"
   }
 }
