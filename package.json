@@ -3,7 +3,7 @@
   "displayName": "Dummy Switch Flag",
   "type": "module",
   "version": "1.0.0",
-  "private": true,
+  "private": false,
   "description": "Dummy switch for use as 'flags'. Flags can be used as conditions in HomeKit automations.",
   "author": "multicatch",
   "license": "Apache-2.0",
