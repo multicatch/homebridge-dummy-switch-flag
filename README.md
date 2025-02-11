@@ -1,215 +1,139 @@
-<p align="center">
+# Homebridge Dummy Switch Flags
 
-<img src="https://github.com/homebridge/branding/raw/latest/logos/homebridge-wordmark-logo-vertical.png" width="150">
+Switches that basically do nothing, but can be used in automations.
 
-</p>
+## Example
 
-<span align="center">
+You have presence sensor and a physical wireless button. 
 
-# Homebridge Platform Plugin Template
+You want to turn off the lights **WHEN** someone presses the button **AND** everybody leaves the room.
 
-</span>
+There is no way to do it in vanilla HomeKit. BUT you can make a workaround like this:
 
-> [!IMPORTANT]
-> **Homebridge v2.0 Information**
->
-> This template currently has a
-> - `package.json -> engines.homebridge` value of `"^1.8.0 || ^2.0.0-beta.0"`
-> - `package.json -> devDependencies.homebridge` value of `"^2.0.0-beta.0"`
->
-> This is to ensure that your plugin will build and run on both Homebridge v1 and v2.
->
-> Once Homebridge v2.0 has been released, you can remove the `-beta.0` in both places.
+#### Prerequisites
 
----
+Suppose you have a switch that does nothing. It will be our **dummy switch**. 
+We will use this just to "remember" that someone pressed the button.
 
-This is a template Homebridge dynamic platform plugin and can be used as a base to help you get started developing your own plugin.
+#### Automation no 1: Button press
 
-This template should be used in conjunction with the [developer documentation](https://developers.homebridge.io/). A full list of all supported service types, and their characteristics is available on this site.
+When someone presses the button, you *turn dummy switch ON*. 
 
-### Clone As Template
+#### Automation no 2: Presence sensor
 
-Click the link below to create a new GitHub Repository using this template, or click the *Use This Template* button above.
+When there is no presence (everyone left the room), you run a Shortcut.
 
-<span align="center">
+In this shortcut you add an IF: check if *dummy switch is ON*. If it's ON, then you turn off the light. 
 
-### [Create New Repository From Template](https://github.com/homebridge/homebridge-plugin-template/generate)
+Then you turn *dummy switch* OFF to reset it.
 
-</span>
+**Why is this IF needed?** 
 
-### Setup Development Environment
+If there was no *dummy switch* then the light would always turn off when the room is empty. Which is not what we wanted. 
 
-To develop Homebridge plugins you must have Node.js 18 or later installed, and a modern code editor such as [VS Code](https://code.visualstudio.com/). This plugin template uses [TypeScript](https://www.typescriptlang.org/) to make development easier and comes with pre-configured settings for [VS Code](https://code.visualstudio.com/) and ESLint. If you are using VS Code install these extensions:
+The button basically acts as an automation activator. But because HomeKit does not support enabling/disabling automations, the *dummy switch* acts as a hack for that.
 
-- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
+## Configuration
 
-### Install Development Dependencies
+To configure the switch, you can use Homebridge UI or JSON. The JSON looks like this:
 
-Using a terminal, navigate to the project folder and run this command to install the development dependencies:
-
-```shell
-npm install
-```
-
-### Update package.json
-
-Open the [`package.json`](./package.json) and change the following attributes:
-
-- `name` - this should be prefixed with `homebridge-` or `@username/homebridge-`, is case-sensitive, and contains no spaces nor special characters apart from a dash `-`
-- `displayName` - this is the "nice" name displayed in the Homebridge UI
-- `homepage` - link to your GitHub repo's `README.md`
-- `repository.url` - link to your GitHub repo
-- `bugs.url` - link to your GitHub repo issues page
-
-When you are ready to publish the plugin you should set `private` to false, or remove the attribute entirely.
-
-### Update Plugin Defaults
-
-Open the [`src/settings.ts`](./src/settings.ts) file and change the default values:
-
-- `PLATFORM_NAME` - Set this to be the name of your platform. This is the name of the platform that users will use to register the plugin in the Homebridge `config.json`.
-- `PLUGIN_NAME` - Set this to be the same name you set in the [`package.json`](./package.json) file.
-
-Open the [`config.schema.json`](./config.schema.json) file and change the following attribute:
-
-- `pluginAlias` - set this to match the `PLATFORM_NAME` you defined in the previous step.
-
-See the [Homebridge API docs](https://developers.homebridge.io/#/config-schema#default-values) for more details on the other attributes you can set in the `config.schema.json` file.
-
-### Build Plugin
-
-TypeScript needs to be compiled into JavaScript before it can run. The following command will compile the contents of your [`src`](./src) directory and put the resulting code into the `dist` folder.
-
-```shell
-npm run build
-```
-
-### Link To Homebridge
-
-Run this command so your global installation of Homebridge can discover the plugin in your development environment:
-
-```shell
-npm link
-```
-
-You can now start Homebridge, use the `-D` flag, so you can see debug log messages in your plugin:
-
-```shell
-homebridge -D
-```
-
-### Watch For Changes and Build Automatically
-
-If you want to have your code compile automatically as you make changes, and restart Homebridge automatically between changes, you first need to add your plugin as a platform in `./test/hbConfig/config.json`:
-```
+```json
 {
-...
     "platforms": [
         {
-            "name": "Config",
-            "port": 8581,
-            "platform": "config"
-        },
-        {
-            "name": "<PLUGIN_NAME>",
-            //... any other options, as listed in config.schema.json ...
-            "platform": "<PLATFORM_NAME>"
+            "switches": [
+                {
+                    "name": "ready_for_sleep",
+                    "type": "simple"
+                },
+                {
+                    "name": "turn_off_lights",
+                    "type": "auto_reset",
+                    "auto_reset": {
+                        "delay": 10000,
+                        "target_state": true
+                    }
+                },
+                {
+                    "name": "clicker",
+                    "type": "button",
+                    "with_counter": true,
+                    "counter_trigger": 20
+                }
+            ],
+            "platform": "DummySwitchFlagHomebridgePlugin"
         }
     ]
 }
 ```
 
-and then you can run:
+The property `platform` **needs to be set to `"DummySwitchFlagHomebridgePlugin"`!
 
-```shell
-npm run watch
+Remember that names need to be unique.
+
+You can configure as many switches as you want. There are three types of switches:
+
+### Simple switch
+
+```json
+{
+    "name": "your_name_here",
+    "type": "simple"
+}
 ```
 
-This will launch an instance of Homebridge in debug mode which will restart every time you make a change to the source code. It will load the config stored in the default location under `~/.homebridge`. You may need to stop other running instances of Homebridge while using this command to prevent conflicts. You can adjust the Homebridge startup command in the [`nodemon.json`](./nodemon.json) file.
+This switch just exists. When you turn it on, it stays on. When you turn it off, it stays off.
 
-### Customise Plugin
+### Timed switch (auto-reset)
 
-You can now start customising the plugin template to suit your requirements.
-
-- [`src/platform.ts`](./src/platform.ts) - this is where your device setup and discovery should go.
-- [`src/platformAccessory.ts`](./src/platformAccessory.ts) - this is where your accessory control logic should go, you can rename or create multiple instances of this file for each accessory type you need to implement as part of your platform plugin. You can refer to the [developer documentation](https://developers.homebridge.io/) to see what characteristics you need to implement for each service type.
-- [`config.schema.json`](./config.schema.json) - update the config schema to match the config you expect from the user. See the [Plugin Config Schema Documentation](https://developers.homebridge.io/#/config-schema).
-
-### Versioning Your Plugin
-
-Given a version number `MAJOR`.`MINOR`.`PATCH`, such as `1.4.3`, increment the:
-
-1. **MAJOR** version when you make breaking changes to your plugin,
-2. **MINOR** version when you add functionality in a backwards compatible manner, and
-3. **PATCH** version when you make backwards compatible bug fixes.
-
-You can use the `npm version` command to help you with this:
-
-```shell
-# major update / breaking changes
-npm version major
-
-# minor update / new features
-npm version update
-
-# patch / bugfixes
-npm version patch
+```json
+{
+    "name": "your_name_here_2",
+    "type": "auto_reset",
+    "auto_reset": {
+        "delay": 10000,
+        "target_state": false
+    }
+}
 ```
 
-### Publish Package
+This switch automatically "resets" after given delay. 
 
-When you are ready to publish your plugin to [npm](https://www.npmjs.com/), make sure you have removed the `private` attribute from the [`package.json`](./package.json) file then run:
+For example, when you turn the above switch on, it will turn itself off after 10000ms (10 seconds).
 
-```shell
-npm publish
+If you set `target_state` to `true`, then it will work in an opposite way. That is, if you turn if OFF then it will turn itself ON after 10s.
+
+### Button
+
+```json
+{
+    "name": "your_name_here_3",
+    "type": "button"
+}
 ```
 
-If you are publishing a scoped plugin, i.e. `@username/homebridge-xxx` you will need to add `--access=public` to command the first time you publish.
+This switch does not want to stay ON. It will turn itself OFF immediately.
 
-#### Publishing Beta Versions
+## Counting activations
 
-You can publish *beta* versions of your plugin for other users to test before you release it to everyone.
+The plugin also lets you count dummy switch activations and make automation based on that.
 
-```shell
-# create a new pre-release version (eg. 2.1.0-beta.1)
-npm version prepatch --preid beta
+When you add the following property to a button, it will start counting switch activations (ON):
 
-# publish to @beta
-npm publish --tag=beta
+```text
+  "with_counter": true,
+  "counter_trigger": 20
 ```
 
-Users can then install the  *beta* version by appending `@beta` to the install command, for example:
+`count_trigger` is a property that will trigger an event after you activate the button a number of times.
 
-```shell
-sudo npm install -g homebridge-example-plugin@beta
-```
+In the above example, the event will be triggered when you turn the switch ON 20 times.
 
-### Best Practices
+**What do I mean by an event?**
 
-Consider creating your plugin with the [Homebridge Verified](https://github.com/homebridge/verified) criteria in mind. This will help you to create a plugin that is easy to use and works well with Homebridge.
-You can then submit your plugin to the Homebridge Verified list for review.
-The most up-to-date criteria can be found [here](https://github.com/homebridge/verified#requirements).
-For reference, the current criteria are:
+`"with_counter": true` adds another dummy switch that will turn ON when the condition is met.
 
-- **General**
-  - The plugin must be of type [dynamic platform](https://developers.homebridge.io/#/#dynamic-platform-template).
-  - The plugin must not offer the same nor less functionality than that of any existing **verified** plugin.
-- **Repo**
-  - The plugin must be published to NPM and the source code available on a GitHub repository, with issues enabled.
-  - A GitHub release should be created for every new version of your plugin, with release notes.
-- **Environment**
-  - The plugin must run on all [supported LTS versions of Node.js](https://github.com/homebridge/homebridge/wiki/How-To-Update-Node.js), at the time of writing this is Node v18, v20 and v22.
-  - The plugin must successfully install and not start unless it is configured.
-  - The plugin must not execute post-install scripts that modify the users' system in any way.
-  - The plugin must not require the user to run Homebridge in a TTY or with non-standard startup parameters, even for initial configuration.
-- **Codebase**
-  - The plugin must implement the [Homebridge Plugin Settings GUI](https://developers.homebridge.io/#/config-schema).
-  - The plugin must not contain any analytics or calls that enable you to track the user.
-  - If the plugin needs to write files to disk (cache, keys, etc.), it must store them inside the Homebridge storage directory.
-  - The plugin must not throw unhandled exceptions, the plugin must catch and log its own errors.
+That is, you get another dummy button that turns ON automatically when you reach given activation count.
 
-### Useful Links
 
-Note these links are here for help but are not supported/verified by the Homebridge team
 
-- [Custom Characteristics](https://github.com/homebridge/homebridge-plugin-template/issues/20)
